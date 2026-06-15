@@ -78,26 +78,26 @@ jobs:
       ####################################################
 
       - name: Build Backend Image
-        if: steps.changes.outputs.backend == 'true'
+        
         run: |
           docker build \
             -t octabyte-assignment-dev-backend \
             ./app/backend
 
       - name: Tag Backend Image
-        if: steps.changes.outputs.backend == 'true'
+        
         run: |
           docker tag octabyte-assignment-dev-backend:latest \
             579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-dev-backend:latest
 
       - name: Push Backend Image
-        if: steps.changes.outputs.backend == 'true'
+        
         run: |
           docker push \
             579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-dev-backend:latest
 
       - name: Deploy Backend
-        if: steps.changes.outputs.backend == 'true'
+        
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
