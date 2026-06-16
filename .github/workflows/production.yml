@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   deploy:
 
     runs-on: ubuntu-latest
@@ -16,6 +17,97 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Production deployment
+      - name: Detect Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'app/frontend/**'
+
+            backend:
+              - 'app/backend/**'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      ####################################################
+      # FRONTEND
+      ####################################################
+
+      - name: Build Frontend Image
+        if: steps.changes.outputs.frontend == 'true'
         run: |
-          echo "Deploying to production..."
+          docker build \
+            -t octabyte-assignment-prod-frontend \
+            ./app/frontend
+
+      - name: Tag Frontend Image
+        if: steps.changes.outputs.frontend == 'true'
+        run: |
+          docker tag octabyte-assignment-prod-frontend:latest \
+            579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-prod-frontend:latest
+
+      - name: Push Frontend Image
+        if: steps.changes.outputs.frontend == 'true'
+        run: |
+          docker push \
+            579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-prod-frontend:latest
+
+      - name: Deploy Frontend
+        if: steps.changes.outputs.frontend == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          script: |
+            cd /var/www/html/frontend
+
+            sudo docker compose down
+            sudo docker compose pull
+            sudo docker compose up -d
+
+      ####################################################
+      # BACKEND
+      ####################################################
+
+      - name: Build Backend Image
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          docker build \
+            -t octabyte-assignment-prod-backend \
+            ./app/backend
+
+      - name: Tag Backend Image
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          docker tag octabyte-assignment-prod-backend:latest \
+            579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-prod-backend:latest
+
+      - name: Push Backend Image
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          docker push \
+            579083551077.dkr.ecr.us-east-1.amazonaws.com/octabyte-assignment-prod-backend:latest
+
+      - name: Deploy Backend
+        if: steps.changes.outputs.backend == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          script: |
+            cd /var/www/html/backend
+
+            sudo docker compose down
+            sudo docker compose pull
+            sudo docker compose up -d
