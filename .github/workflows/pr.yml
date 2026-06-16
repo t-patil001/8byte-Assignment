@@ -26,3 +26,31 @@ jobs:
       - name: Run Unit Tests
         run: |
           pytest
+
+      ###################################################
+      # Dependency Scan
+      ###################################################
+
+      - name: Install pip-audit
+        run: |
+          pip install pip-audit
+
+      - name: Dependency Vulnerability Scan
+        run: |
+          pip-audit -r app/backend/requirements.txt
+
+      ###################################################
+      # Container Scan
+      ###################################################
+
+      - name: Build Backend Image
+        run: |
+          docker build -t backend-test ./app/backend
+
+      - name: Scan Backend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: backend-test
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
