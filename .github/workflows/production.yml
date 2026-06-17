@@ -69,10 +69,17 @@ jobs:
           username: ${{ secrets.PROD_EC2_USER }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
-            cd /var/www/html/frontend
+            cd /var/www/html/backend
+
+            aws ecr get-login-password --region us-east-1 | \
+            sudo docker login \
+            --username AWS \
+            --password-stdin 579083551077.dkr.ecr.us-east-1.amazonaws.com
 
             sudo docker compose down
+
             sudo docker compose pull
+
             sudo docker compose up -d
 
       ####################################################
@@ -106,8 +113,15 @@ jobs:
           username: ${{ secrets.PROD_EC2_USER }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
-            cd /var/www/html/backend
+            cd /var/www/html/frontend
+
+            aws ecr get-login-password --region us-east-1 | \
+            sudo docker login \
+            --username AWS \
+            --password-stdin 579083551077.dkr.ecr.us-east-1.amazonaws.com
 
             sudo docker compose down
+
             sudo docker compose pull
+
             sudo docker compose up -d
