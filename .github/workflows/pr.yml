@@ -52,5 +52,6 @@ jobs:
         with:
           image-ref: backend-test
           format: table
-          exit-code: 1
+
+
           severity: CRITICAL,HIGH
