@@ -4,4 +4,4 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "Backend is running: v0"}
+    return {"message": "Backend is running: v1"}
